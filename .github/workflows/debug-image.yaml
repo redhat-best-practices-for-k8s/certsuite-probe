@@ -1,4 +1,4 @@
-name: 'Test/push the `debug-partner` image'
+name: 'Test/push the `debug` image'
 on:
   # Run the workflow every day at 5 am UTC (1 am EST, 7am CET)
   # This is useful for keeping the image up-to-date with security
@@ -21,8 +21,8 @@ env:
   IMAGE_CONTAINER_FILE_PATH: ./Dockerfile
 
 jobs:
-  test-debug-partner-image:
-    name: 'Build and test the `debug-partner` image'
+  test-debug-image:
+    name: 'Build and test the `debug` image'
     runs-on: ubuntu-22.04
 
     steps:
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 'Build the `debug-partner` image'
+      - name: 'Build the `debug` image'
         run: docker build --no-cache -f Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
 
       - name: 'Test: Check if lscpu is installed'
@@ -75,7 +75,7 @@ jobs:
             type=schedule,pattern=nightly
             type=semver,pattern={{raw}}
 
-      - name: 'Build and push the new `debug-partner` image'
+      - name: 'Build and push the new `debug` image'
         uses: docker/build-push-action@v6
         with:
           push: true
