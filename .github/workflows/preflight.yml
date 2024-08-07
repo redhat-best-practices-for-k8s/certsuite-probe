@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       SHELL: /bin/bash
-      IMAGE_NAME: quay.io/testnetworkfunction/k8s-best-practices-debug:latest
+      IMAGE_NAME: quay.io/redhat-best-practices-for-k8s/certsuite-probe:latest
 
     steps:
       - uses: actions/checkout@v4
