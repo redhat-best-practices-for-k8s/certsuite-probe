@@ -1,4 +1,4 @@
-name: 'Test/push the `debug` image'
+name: 'Test/push the `probe` image'
 on:
   # Run the workflow every day at 5 am UTC (1 am EST, 7am CET)
   # This is useful for keeping the image up-to-date with security
@@ -16,13 +16,85 @@ defaults:
     shell: bash
 env:
   REGISTRY: quay.io
-  IMAGE_NAME: testnetworkfunction/k8s-best-practices-debug
+  IMAGE_NAME_LEGACY: testnetworkfunction/k8s-best-practices-debug
+  IMAGE_TAG_LEGACY: latest
+  IMAGE_NAME: redhat-best-practices-for-k8s/certsuite-probe
   IMAGE_TAG: latest
   IMAGE_CONTAINER_FILE_PATH: ./Dockerfile
 
 jobs:
-  test-debug-image:
+  test-debug-image-legacy:
     name: 'Build and test the `debug` image'
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 'Build the `debug` image'
+        run: docker build --no-cache -f Dockerfile -t $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY .
+
+      - name: 'Test: Check if lscpu is installed'
+        run: docker run $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY which lscpu
+
+      - name: 'Test: Check if lsblk is installed'
+        run: docker run $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY which lsblk
+
+      - name: 'Test: Check if lspci is installed'
+        run: docker run $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY which lspci
+
+      - name: 'Test: Check if ping is installed'
+        run: docker run $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY which ping
+
+      - name: 'Test: Check if ip is installed'
+        run: docker run $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY which ip
+
+      - name: Authenticate against Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          # Use a Robot Account to authenticate against Quay.io
+          # https://docs.quay.io/glossary/robot-accounts.html
+          username: ${{ secrets.QUAY_ROBOT_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+      - name: Add metadata
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LEGACY }}
+          labels: |
+            maintainer=Red Hat, Inc.
+            org.opencontainers.image.title=Best Practices Debug Image
+            org.opencontainers.image.description=CNF Certification Test certsuite debug image
+            org.opencontainers.image.vendor=Red Hat, Inc.
+          tags: |
+            type=raw,value=latest
+            type=schedule,pattern=nightly
+            type=semver,pattern={{raw}}
+
+      - name: 'Build and push the new `debug` image'
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: ${{ env.IMAGE_CONTAINER_FILE_PATH }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: If failed to create the image, send alert msg to dev team.
+        if: ${{ failure() }}
+        uses: ./.github/actions/slack-webhook-sender
+        with:
+          message: 'Failed to create debug parter image version ${{ env.IMAGE_TAG_LEGACY }}'
+          slack_webhook: '${{ secrets.SLACK_ALERT_WEBHOOK_URL }}'
+
+  test-debug-image:
+    name: 'Build and test the `probe` image'
     runs-on: ubuntu-22.04
 
     steps:
@@ -57,8 +129,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           # Use a Robot Account to authenticate against Quay.io
           # https://docs.quay.io/glossary/robot-accounts.html
-          username: ${{ secrets.QUAY_ROBOT_USERNAME }}
-          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+          username: ${{ secrets.QUAY_ROBOT_USERNAME_K8S }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN_K8S }}
 
       - name: Add metadata
         uses: docker/metadata-action@v5
@@ -67,15 +139,15 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
             maintainer=Red Hat, Inc.
-            org.opencontainers.image.title=Best Practices Debug Image
-            org.opencontainers.image.description=CNF Certification Test certsuite debug image
+            org.opencontainers.image.title=Best Practices Probe Image
+            org.opencontainers.image.description=Certsuite Probe
             org.opencontainers.image.vendor=Red Hat, Inc.
           tags: |
             type=raw,value=latest
             type=schedule,pattern=nightly
             type=semver,pattern={{raw}}
 
-      - name: 'Build and push the new `debug` image'
+      - name: 'Build and push the new `probe` image'
         uses: docker/build-push-action@v6
         with:
           push: true
