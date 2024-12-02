@@ -25,6 +25,7 @@ RUN \
 	dnf update --assumeyes --disableplugin=subscription-manager \
 	&& dnf install --assumeyes --disableplugin=subscription-manager \
 		ethtool \
+		golang \
 		iproute \
 		iptables \
 		iputils \
@@ -38,5 +39,10 @@ RUN \
 	&& dnf clean all --assumeyes --disableplugin=subscription-manager \
 	&& rm -fr /var/cache/yum \
 	&& mkdir /root/podman
+# Set the GOPATH environment variable
+ENV GOPATH=/go
+# Add the Go binary directory to the PATH
+ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.8.5
 COPY --from=podman-builder /podman/bin/podman /root/podman/
 VOLUME ["/host"]
