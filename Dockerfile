@@ -1,5 +1,5 @@
 # IMPORTANT: podman must be build from ubi8.x only. Do not upgrade it to ubi9.
-FROM registry.access.redhat.com/ubi8/ubi:8.10-1020 as podman-builder
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/ubi:8.10-1020 as podman-builder
 
 # hadolint ignore=DL3041
 RUN \
@@ -43,6 +43,6 @@ RUN \
 ENV GOPATH=/go
 # Add the Go binary directory to the PATH
 ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.8.5
+RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.2
 COPY --from=podman-builder /podman/bin/podman /root/podman/
 VOLUME ["/host"]
