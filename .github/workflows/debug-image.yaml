@@ -25,7 +25,7 @@ env:
 jobs:
   test-debug-image-legacy:
     name: 'Build and test the `debug` image'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
 
   test-debug-image:
     name: 'Build and test the `probe` image'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
