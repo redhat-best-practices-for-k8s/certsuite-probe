@@ -1,29 +1,30 @@
 # IMPORTANT: podman must be build from ubi8.x only. Do not upgrade it to ubi9.
-FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/ubi:8.10-1020 as podman-builder
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/ubi:8.10-1304 as podman-builder
 
 # hadolint ignore=DL3041
 RUN \
-	dnf update --assumeyes --disableplugin=subscription-manager \
-	&& dnf install --assumeyes --disableplugin=subscription-manager \
+	dnf install --assumeyes --disableplugin=subscription-manager --allowerasing \
 		git \
 		make \
 		golang \
+		gcc \
+		glibc-devel \
 		gpgme-devel \
 		libseccomp-devel \
 		libassuan-devel \
 		python3 \
 	&& dnf clean all \
-	&& git clone https://github.com/containers/podman.git
+	&& git clone https://github.com/containers/podman.git \
+	&& which go \
+	&& go version
+ENV PATH="/usr/lib/golang/bin:$PATH"
 WORKDIR /podman
-RUN \
-	git checkout v4.9.5 \
-	&& make
+RUN git checkout v4.9.5 && make
 
-FROM registry.access.redhat.com/ubi9/ubi:9.4-1181
+FROM registry.access.redhat.com/ubi9/ubi:9.6
 # hadolint ignore=DL3041
 RUN \
-	dnf update --assumeyes --disableplugin=subscription-manager \
-	&& dnf install --assumeyes --disableplugin=subscription-manager \
+	dnf install --assumeyes --disableplugin=subscription-manager \
 		ethtool \
 		golang \
 		iproute \
