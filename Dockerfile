@@ -19,7 +19,7 @@ RUN \
 	git checkout v4.9.5 \
 	&& make
 
-FROM registry.access.redhat.com/ubi9/ubi:9.4-1181
+FROM registry.access.redhat.com/ubi9/ubi:9.6-1750786174
 # hadolint ignore=DL3041
 RUN \
 	dnf update --assumeyes --disableplugin=subscription-manager \
@@ -43,6 +43,6 @@ RUN \
 ENV GOPATH=/go
 # Add the Go binary directory to the PATH
 ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.2
+RUN go install github.com/fullstorydev/grpcurl/cmd/grpcurl@v1.9.3
 COPY --from=podman-builder /podman/bin/podman /root/podman/
 VOLUME ["/host"]
