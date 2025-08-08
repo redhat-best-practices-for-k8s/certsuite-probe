@@ -85,6 +85,14 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LEGACY }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LEGACY }}:buildcache,mode=max,compression=zstd,oci-mediatypes=true
 
       - name: If failed to create the image, send alert msg to dev team.
         if: ${{ failure() }}
@@ -155,6 +163,14 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max,compression=zstd,oci-mediatypes=true
 
       - name: If failed to create the image, send alert msg to dev team.
         if: ${{ failure() }}
