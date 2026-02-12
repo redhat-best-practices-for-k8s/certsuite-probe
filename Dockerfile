@@ -32,6 +32,7 @@ RUN \
 		jq \
 		libselinux-utils \
 		net-tools \
+		openssl \
 		nftables \
 		pciutils \
 		procps-ng \
