@@ -6,7 +6,7 @@ name: Preflight Daily
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-
+permissions: read-all
 jobs:
   preflight-debug-partner:
     runs-on: ubuntu-24.04
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: 1.25
+          go-version: stable
 
       - name: Disable default go problem matcher
         run: echo "::remove-matcher owner=go::"
