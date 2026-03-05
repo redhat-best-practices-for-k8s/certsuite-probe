@@ -34,7 +34,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: 'Build the `debug` image'
         run: docker build --no-cache -f Dockerfile -t $IMAGE_NAME_LEGACY:$IMAGE_TAG_LEGACY .
@@ -115,7 +115,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: 'Build the `debug` image'
         run: docker build --no-cache -f Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
