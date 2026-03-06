@@ -82,7 +82,7 @@ jobs:
             type=semver,pattern={{raw}}
 
       - name: 'Build and push the new `debug` image'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           file: ${{ env.IMAGE_CONTAINER_FILE_PATH }}
@@ -163,7 +163,7 @@ jobs:
             type=semver,pattern={{raw}}
 
       - name: 'Build and push the new `probe` image'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           file: ${{ env.IMAGE_CONTAINER_FILE_PATH }}
