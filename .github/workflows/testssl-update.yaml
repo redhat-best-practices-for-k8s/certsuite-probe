@@ -1,0 +1,93 @@
+name: Update testssl.sh version
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update-testssl:
+    if: github.repository_owner == 'redhat-best-practices-for-k8s'
+    name: Check for new testssl.sh release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+
+      - name: Determine current and latest testssl.sh versions
+        id: versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          CURRENT=$(grep -oP 'TESTSSL_VERSION=\K[^\s]+' Dockerfile | head -1)
+          echo "current=${CURRENT}" >> "$GITHUB_OUTPUT"
+
+          LATEST=""
+          for attempt in {1..5}; do
+            set +e
+            LATEST=$(gh release list -R testssl/testssl.sh --limit 5 --json tagName,isLatest,isPrerelease \
+              --jq '[.[] | select(.isLatest and (.isPrerelease | not))] | .[0].tagName')
+            rc=$?
+            set -e
+            if [[ ${rc} -eq 0 && -n "${LATEST}" ]]; then break; fi
+            SLEEP=$((2 ** (attempt - 1)))
+            echo "Attempt ${attempt} failed. Retrying in ${SLEEP}s..."
+            sleep "${SLEEP}"
+          done
+
+          if [[ -z "${LATEST}" || "${LATEST}" == "null" ]]; then
+            echo "Failed to resolve latest testssl.sh tag" >&2
+            exit 1
+          fi
+          echo "latest=${LATEST}" >> "$GITHUB_OUTPUT"
+
+          if [[ "${CURRENT}" == "${LATEST}" ]]; then
+            echo "Already at latest (${LATEST})."
+            echo "should_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop if already up to date
+        if: steps.versions.outputs.should_update == 'false'
+        run: echo "No update needed"
+
+      - name: Update Dockerfile
+        if: steps.versions.outputs.should_update == 'true'
+        run: |
+          set -euo pipefail
+          LATEST=${{ steps.versions.outputs.latest }}
+          sed -i "s|TESTSSL_VERSION=.*|TESTSSL_VERSION=${LATEST}|" Dockerfile
+          echo "Updated testssl.sh to ${LATEST}:"
+          git --no-pager diff -- Dockerfile | cat
+
+      - name: Build image to verify
+        if: steps.versions.outputs.should_update == 'true'
+        run: docker build -t certsuite-probe:testssl-test .
+
+      - name: Verify testssl.sh works
+        if: steps.versions.outputs.should_update == 'true'
+        run: docker run --rm certsuite-probe:testssl-test testssl.sh --version
+
+      - name: Create PR
+        if: steps.versions.outputs.should_update == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update testssl.sh to ${{ steps.versions.outputs.latest }}"
+          title: "Update testssl.sh to ${{ steps.versions.outputs.latest }}"
+          body: |
+            Bumps testssl.sh from `${{ steps.versions.outputs.current }}` to `${{ steps.versions.outputs.latest }}`.
+
+            Release: https://github.com/testssl/testssl.sh/releases/tag/${{ steps.versions.outputs.latest }}
+          branch: update-testssl-${{ steps.versions.outputs.latest }}

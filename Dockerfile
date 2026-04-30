@@ -20,12 +20,15 @@ RUN \
 	&& make
 
 FROM registry.access.redhat.com/ubi9/ubi:9.7-1777525589
+
+ARG TESTSSL_VERSION=v3.2.3
 # hadolint ignore=DL3041
 RUN \
 	dnf update --assumeyes --disableplugin=subscription-manager \
 	&& dnf install --assumeyes --disableplugin=subscription-manager \
 		ethtool \
 		golang \
+		hostname \
 		iproute \
 		iptables \
 		iputils \
@@ -36,10 +39,22 @@ RUN \
 		nftables \
 		pciutils \
 		procps-ng \
+		bind-utils \
+		socat \
 		util-linux \
 	&& dnf clean all --assumeyes --disableplugin=subscription-manager \
 	&& rm -fr /var/cache/yum \
 	&& mkdir /root/podman
+
+# Install testssl.sh from pinned release
+# hadolint ignore=DL3003
+RUN curl -sL "https://github.com/testssl/testssl.sh/archive/refs/tags/${TESTSSL_VERSION}.tar.gz" \
+		-o /tmp/testssl.tar.gz \
+	&& mkdir -p /opt/testssl \
+	&& tar -xzf /tmp/testssl.tar.gz -C /opt/testssl --strip-components=1 \
+	&& chmod +x /opt/testssl/testssl.sh \
+	&& ln -s /opt/testssl/testssl.sh /usr/local/bin/testssl.sh \
+	&& rm -f /tmp/testssl.tar.gz
 # Set the GOPATH environment variable
 ENV GOPATH=/go
 # Add the Go binary directory to the PATH
