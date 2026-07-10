@@ -183,7 +183,7 @@ When adding new tools to the probe image:
 
 ### Go Version
 
-The CI workflows use Go 1.25 for building and testing.
+The CI workflows use Go 1.25 (`pre-main.yaml`) and `stable` (`preflight.yml`) for building and testing.
 
 ### Linting
 
