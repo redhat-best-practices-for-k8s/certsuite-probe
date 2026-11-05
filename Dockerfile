@@ -21,7 +21,7 @@ RUN \
 
 FROM registry.access.redhat.com/ubi9/ubi:1793861591
 
-ARG TESTSSL_VERSION=v3.2.4
+ARG TESTSSL_VERSION=v3.2.5
 # hadolint ignore=DL3041
 RUN \
 	dnf update --assumeyes --disableplugin=subscription-manager \
